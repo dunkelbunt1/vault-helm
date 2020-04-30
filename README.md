@@ -69,8 +69,10 @@ openssl req -config ${TMPDIR}/${BASENAME}-csr.conf -new -key ${TMPDIR}/${BASENAM
 ```
 kubectl create namespace vault
 kubectl create -f ${TMPDIR}/${BASENAME}-csr.yaml --namespace ${NAMESPACE}
+
 #Check if the secret is created
 kubectl get csr ${CSR_NAME} --namespace ${NAMESPACE}
+
 #If the status is on issued go ahead and approve it
 kubectl certificate approve ${CSR_NAME} --namespace ${NAMESPACE}
 serverCert=$(kubectl get csr ${CSR_NAME} -o jsonpath='{.status.certificate}')
