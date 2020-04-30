@@ -100,6 +100,12 @@ vault-agent-injector-588476fbc7-thfwx   1/1     Running   0          2m52s
 kubectl config set-context --current --namespace=vault
 kubectl exec -ti vault-0 -- vault operator init
 ```
+
+8. **Uninstall everything**
+```
+helm uninstall vault 
+kubectl delete pvc --all
+```
 **Requirments:** 
 ```
 helm v.3.2.x, kubectl version: 1.18.x, minikube version: v1.9.x
