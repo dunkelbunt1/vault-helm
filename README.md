@@ -1,7 +1,7 @@
 # This branch is there to show an error with Vault
-```
-Error initializing: Put https://127.0.0.1:8200/v1/sys/init: x509: certificate signed by unknown authority
-```
+
+**Error initializing: Put https://127.0.0.1:8200/v1/sys/init: x509: certificate signed by unknown authority**
+
 Please follow the follwing steps to reproduce the error:
 
 1. **Set the following enviroment variables in your shell**
