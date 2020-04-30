@@ -9,8 +9,9 @@ global:
   # imagePullSecrets:
   #   - name: image-pull-secret
   # TLS for end-to-end encrypted transport
-  tlsDisable: true
-
+  tlsDisable: false
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/userconfig/vault-tls/vault.ca
 injector:
   # True if you want to enable vault agent injection.
   enabled: true
@@ -40,7 +41,7 @@ injector:
 
   # Configures the log format of the injector. Supported log formats: "standard", "json".
   logFormat: "standard"
-
+  
   # Configures all Vault Agent sidecars to revoke their token when shutting down
   revokeOnShutdown: false
 
@@ -112,7 +113,10 @@ server:
     repository: "vault"
     tag: "1.4.0"
     # Overrides the default Image Pull Policy
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
+    extraVolumes:
+      - type: secret
+        name: vault-tls
 
   # Configure the Update Strategy Type for the StatefulSet
   # See https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
@@ -135,9 +139,6 @@ server:
       # traffic: external
     annotations: {}
       # |
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-      #   or
       # kubernetes.io/ingress.class: nginx
       # kubernetes.io/tls-acme: "true"
     hosts:
@@ -197,9 +198,9 @@ server:
   # extraVolumes is a list of extra volumes to mount. These will be exposed
   # to Vault in the path `/vault/userconfig/<name>/`. The value below is
   # an array of objects, examples are shown below.
-  extraVolumes: []
-    # - type: secret (or "configMap")
-    #   name: my-secret
+  extraVolumes: 
+    - type: secret
+      name: vault-tls
     #   path: null # default is `/vault/userconfig`
 
   # Affinity Settings
@@ -233,8 +234,8 @@ server:
   extraLabels: {}
 
   # Extra annotations to attach to the server pods
-  # This can either be YAML or a YAML-formatted multi-line templated string map
-  # of the annotations to apply to the server pods
+  # This should be a multi-line string mapping directly to the a map of
+  # the annotations to apply to the server pods
   annotations: {}
 
   # Enables a headless service to be used by the Vault Statefulset
@@ -260,9 +261,8 @@ server:
     port: 8200
     # Target port to which the service should be mapped to
     targetPort: 8200
-    # Extra annotations for the service definition. This can either be YAML or a
-    # YAML-formatted multi-line templated string map of the annotations to apply
-    # to the service.
+    # Extra annotations for the service definition. This should be a multi-line
+    # string formatted as a map of the annotations to apply to the service.
     annotations: {}
 
   # This configures the Vault Statefulset to create a PVC for data
@@ -342,24 +342,24 @@ server:
   ha:
     enabled: false
     replicas: 3
-
-    # Enables Vault's integrated Raft storage.  Unlike the typical HA modes where
-    # Vault's persistence is external (such as Consul), enabling Raft mode will create
+    
+    # Enables Vault's integrated Raft storage.  Unlike the typical HA modes where 
+    # Vault's persistence is external (such as Consul), enabling Raft mode will create 
     # persistent volumes for Vault to store data according to the configuration under server.dataStorage.
     # The Vault cluster will coordinate leader elections and failovers internally.
     raft:
-
+      
       # Enables Raft integrated storage
       enabled: false
-      # Set the Node Raft ID to the name of the pod
-      setNodeId: false
       config: |
         ui = true
-
         listener "tcp" {
-          tls_disable = 1
+          tls_disable = 0
           address = "[::]:8200"
           cluster_address = "[::]:8201"
+          tls_cert_file = "/vault/userconfig/vault-tls/vault.crt" 
+          tls_key_file  = "/vault/userconfig/vault-tls/vault.key" 
+          tls_client_ca_file = "/vault/userconfig/vault-tls/vault.ca"
         }
 
         storage "raft" {
@@ -406,9 +406,9 @@ server:
 
   # Definition of the serviceAccount used to run Vault.
   serviceAccount:
-    # Extra annotations for the serviceAccount definition. This can either be
-    # YAML or a YAML-formatted multi-line templated string map of the
-    # annotations to apply to the serviceAccount.
+    # Extra annotations for the serviceAccount definition. This should be a
+    # multi-line string formatted as a map of the annotations to apply to the
+    # serviceAccount.
     annotations: {}
 
 # Vault UI
@@ -430,6 +430,6 @@ ui:
   # loadBalancerIP:
 
   # Extra annotations to attach to the ui service
-  # This can either be YAML or a YAML-formatted multi-line templated string map
-  # of the annotations to apply to the ui service
+  # This should be a multi-line string mapping directly to the a map of
+  # the annotations to apply to the ui service
   annotations: {}
